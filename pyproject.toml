@@ -20,6 +20,10 @@ packages = ["src/reachable"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The demo is not an installed package, and bare `pytest` does not put the repo
+# root on sys.path the way `python -m pytest` does. Without this, tests/test_demo.py
+# imports fine locally and fails in CI.
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100
