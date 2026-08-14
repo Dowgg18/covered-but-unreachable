@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests demo
+      - run: pytest -q
+
+      # The demo exists to fail. `if` rather than `&&` because the step runs
+      # under `bash -e`, where a non-zero exit anywhere in an `&&` list fails the
+      # step — which would mean the demo working correctly turned CI red.
+      - name: the demo must fail, and for the stated reasons
+        run: |
+          if python -m demo.run_gate > out.txt; then
+            echo "the gate passed; it is supposed to fail"
+            cat out.txt
+            exit 1
+          fi
+          grep -q "ORPHANED     helpdesk.py:37  ack.unassigned.v1" out.txt
+          grep -q "PREVIEW-ONLY helpdesk.py:57  greet.v2" out.txt
+          grep -q "SILENT       helpdesk.py:53  ack.unassigned.v2" out.txt
