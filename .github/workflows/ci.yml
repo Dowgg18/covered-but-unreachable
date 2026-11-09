@@ -35,3 +35,16 @@ jobs:
           grep -q "ORPHANED     helpdesk.py:37  ack.unassigned.v1" out.txt
           grep -q "PREVIEW-ONLY helpdesk.py:57  greet.v2" out.txt
           grep -q "SILENT       helpdesk.py:53  ack.unassigned.v2" out.txt
+
+  package:
+    name: build and check the package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build twine
+      - run: python -m build
+      # --strict fails on metadata PyPI would reject or render badly.
+      - run: twine check --strict dist/*
